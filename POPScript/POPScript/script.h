@@ -132,6 +132,9 @@ public:
 	void build(Script& script) const;
 
 
-	constexpr ScriptCode& code(const CodeLocation location) { return const_cast<Node*>(location)->code; }
-	constexpr const ScriptCode& code(const CodeLocation location) const { return location->code; }
+	//constexpr ScriptCode& code(const CodeLocation location) { return const_cast<Node*>(location)->code; }
+	//constexpr const ScriptCode& code(const CodeLocation location) const { return location->code; }
+
+	constexpr ScriptCode& operator[] (const CodeLocation location) { return const_cast<Node*>(location)->code; }
+	constexpr const ScriptCode& operator[] (const CodeLocation location) const { return location->code; }
 };

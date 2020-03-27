@@ -144,13 +144,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="functions.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="parser_elements.cpp" />
     <ClCompile Include="script.cpp" />
+    <ClCompile Include="types.cpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="consts.h" />
+    <ClInclude Include="functions.h" />
+    <ClInclude Include="parser_elements.h" />
     <ClInclude Include="script.h" />
+    <ClInclude Include="types.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

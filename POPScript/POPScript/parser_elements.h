@@ -25,7 +25,7 @@ enum class CodeFragmentType
 
 
 
-class CodeFragment : public Cloneable
+class CodeFragment : public Cloneable, public Conversor<CodeFragment>
 {
 public:
 	virtual ~CodeFragment() {}
@@ -182,6 +182,9 @@ public:
 
 	static bool isValid(const std::string& str);
 	static bool isValid(ScriptCode code);
+
+	static TypeConstant parse(const std::string& str);
+	static TypeConstant parse(ScriptCode code);
 };
 
 
@@ -738,3 +741,290 @@ public:
 
 	const Entry& operator[] (size_t idx) const;
 };
+
+
+
+class InstructionConstDeclaration : public Instruction
+{
+public:
+	class Entry
+	{
+	private:
+		Identifier _id;
+		FieldValue _value;
+
+	public:
+		Entry();
+		Entry(const Identifier& identifier, FieldValue initValue);
+		Entry(const Entry&) = default;
+		Entry(Entry&&) noexcept = default;
+
+		Entry& operator= (const Entry& e) = default;
+		Entry& operator= (Entry&& e) noexcept = default;
+
+		const Identifier& getIdentifier() const;
+
+		FieldValue getInitValue() const;
+
+		bool operator== (const InstructionConstDeclaration::Entry& e) const;
+		bool operator!= (const InstructionConstDeclaration::Entry& e) const;
+	};
+
+private:
+	std::vector<Entry> _entries;
+
+public:
+	InstructionConstDeclaration();
+	InstructionConstDeclaration(const std::vector<Entry>& entries);
+	InstructionConstDeclaration(const InstructionConstDeclaration& inst);
+	InstructionConstDeclaration(InstructionConstDeclaration&& inst) noexcept;
+	~InstructionConstDeclaration();
+
+	InstructionConstDeclaration& operator= (const InstructionConstDeclaration& inst);
+	InstructionConstDeclaration& operator= (InstructionConstDeclaration&& inst) noexcept;
+
+	bool empty() const;
+	size_t size() const;
+
+	const Entry& getEntry(size_t idx) const;
+
+	Instruction::Type getInstructionType() const override;
+
+	std::string toString(size_t identation = 0) const override;
+
+	void* clone() const override;
+
+	bool operator== (const Instruction& inst) const override;
+	bool operator== (const InstructionConstDeclaration& inst) const;
+	bool operator!= (const InstructionConstDeclaration& inst) const;
+
+	const Entry& operator[] (size_t idx) const;
+};
+
+
+
+class InstructionConditional : public Instruction
+{
+private:
+	CloneableAllocator<Statement> _condition;
+	CloneableAllocator<Instruction> _block;
+	CloneableAllocator<Instruction> _elseBlock;
+
+public:
+	InstructionConditional();
+	InstructionConditional(const Statement& condition, const Instruction& block, const Instruction* elseBlock = nullptr);
+	InstructionConditional(const InstructionConditional& inst);
+	InstructionConditional(InstructionConditional&& inst) noexcept;
+	~InstructionConditional();
+
+	InstructionConditional& operator= (const InstructionConditional& inst);
+	InstructionConditional& operator= (InstructionConditional&& inst) noexcept;
+
+	const Statement& getCondition() const;
+
+	const Instruction& getBlock() const;
+
+	bool hasElseBlock() const;
+	const Instruction& getElseBlock() const;
+
+	Instruction::Type getInstructionType() const override;
+
+	std::string toString(size_t identation = 0) const override;
+
+	void* clone() const override;
+
+	bool operator== (const Instruction& inst) const override;
+	bool operator== (const InstructionConditional& inst) const;
+	bool operator!= (const InstructionConditional& inst) const;
+};
+
+
+
+class InstructionEveryLoop : public Instruction
+{
+private:
+	ScriptCode _turns;
+	CloneableAllocator<Instruction> _block;
+
+public:
+	InstructionEveryLoop();
+	InstructionEveryLoop(ScriptCode turns, const Instruction& block);
+	InstructionEveryLoop(const InstructionEveryLoop& inst);
+	InstructionEveryLoop(InstructionEveryLoop&& inst) noexcept;
+	~InstructionEveryLoop();
+
+	InstructionEveryLoop& operator= (const InstructionEveryLoop& inst);
+	InstructionEveryLoop& operator= (InstructionEveryLoop&& inst) noexcept;
+
+	ScriptCode getTurns() const;
+
+	ScriptCode getFirstValue() const;
+	ScriptCode getSecondValue() const;
+
+	const Instruction& getBlock() const;
+
+	Instruction::Type getInstructionType() const override;
+
+	std::string toString(size_t identation = 0) const override;
+
+	void* clone() const override;
+
+	bool operator== (const Instruction& inst) const override;
+	bool operator== (const InstructionEveryLoop& inst) const;
+	bool operator!= (const InstructionEveryLoop& inst) const;
+};
+
+
+
+class CodeFragmentList
+{
+private:
+	std::vector<CloneableAllocator<CodeFragment>> _code;
+	size_t _sourceLine;
+
+public:
+	CodeFragmentList();
+	explicit CodeFragmentList(const size_t sourceLine, const CodeFragment& cf);
+	CodeFragmentList(const size_t sourceLine, const std::vector<CodeFragment*>& code);
+	CodeFragmentList(const size_t sourceLine, const std::vector<CloneableAllocator<CodeFragment>>& code);
+	CodeFragmentList(const size_t sourceLine, const CloneableVector<CodeFragment>& code);
+	CodeFragmentList(const size_t sourceLine, const CodeFragmentList& fl);
+	CodeFragmentList(const CodeFragmentList& fl);
+	CodeFragmentList(CodeFragmentList&& fl) noexcept;
+	~CodeFragmentList();
+
+	CodeFragmentList& operator= (const CodeFragmentList& fl);
+	CodeFragmentList& operator= (CodeFragmentList&& fl) noexcept;
+
+	size_t size() const;
+	bool empty() const;
+	operator bool() const;
+	friend bool operator! (const CodeFragmentList& fl);
+
+	size_t sourceLine() const;
+
+	const std::vector<CloneableAllocator<CodeFragment>>& code() const;
+
+	void set(const size_t index, const CodeFragment& code);
+	const CodeFragment& get(const size_t index) const;
+
+	CodeFragment& operator[] (const size_t index);
+	const CodeFragment& operator[] (const size_t index) const;
+
+
+	CodeFragmentList(const size_t sourceLine, const std::vector<CodeFragment*> code, const size_t off, const size_t len);
+	CodeFragmentList(const size_t sourceLine, const std::vector<CloneableAllocator<CodeFragment>>& code, const size_t off, const size_t len);
+	CodeFragmentList(const size_t sourceLine, const CloneableVector<CodeFragment>& code, const size_t off, const size_t len);
+
+	CodeFragmentList sublist(const size_t off, const size_t len) const;
+	CodeFragmentList sublist(const size_t off) const;
+
+	CodeFragmentList concat(const CodeFragmentList& fl) const;
+	inline CodeFragmentList concat(const CodeFragment& code) const { return concat(CodeFragmentList{ _sourceLine, code }); }
+	inline CodeFragmentList concat(const std::vector<CodeFragment*>& code) const { return concat(CodeFragmentList{ _sourceLine, code }); }
+	inline CodeFragmentList concat(const std::vector<CloneableAllocator<CodeFragment>>& code) const { return concat(CodeFragmentList{ _sourceLine, code }); }
+	inline CodeFragmentList concat(const CloneableVector<CodeFragment>& code) const { return concat(CodeFragmentList{ _sourceLine, code }); }
+
+	friend CodeFragmentList operator+ (const CodeFragmentList& fl0, const CodeFragmentList& fl1);
+	friend CodeFragmentList operator+ (const CodeFragmentList& fl, const CodeFragment& code);
+	friend CodeFragmentList operator+ (const CodeFragmentList& fl, const std::vector<CodeFragment*>& code);
+	friend CodeFragmentList operator+ (const CodeFragmentList& fl, const std::vector<CloneableAllocator<CodeFragment>>& code);
+	friend CodeFragmentList operator+ (const CodeFragmentList& fl, const CloneableVector<CodeFragment>& code);
+
+	inline CodeFragmentList& operator+= (const CodeFragmentList& fl) { return operator=(concat(fl)); }
+	inline CodeFragmentList& operator+= (const CodeFragment& code) { return operator=(concat(code)); }
+	inline CodeFragmentList& operator+= (const std::vector <CodeFragment*>& code) { return operator=(concat(code)); }
+	inline CodeFragmentList& operator+= (const std::vector<CloneableAllocator<CodeFragment>>& code) { return operator=(concat(code)); }
+	inline CodeFragmentList& operator+= (const CloneableVector<CodeFragment>& code) { return operator=(concat(code)); }
+
+	inline CodeFragmentList concatFirst(const CodeFragmentList& fl) const { return fl.concat(*this); }
+	inline CodeFragmentList concatFirst(const CodeFragment& code) const { return concatFirst(CodeFragmentList{ _sourceLine, code }); }
+	inline CodeFragmentList concatFirst(const std::vector<CodeFragment*>& code) const { return concatFirst(CodeFragmentList{ _sourceLine, code }); }
+	inline CodeFragmentList concatFirst(const std::vector<CloneableAllocator<CodeFragment>>& code) const { return concatFirst(CodeFragmentList{ _sourceLine, code }); }
+	inline CodeFragmentList concatFirst(const CloneableVector<CodeFragment>& code) const { return concatFirst(CodeFragmentList{ _sourceLine, code }); }
+
+	friend CodeFragmentList operator+ (const CodeFragment& code, const CodeFragmentList& fl);
+	friend CodeFragmentList operator+ (const std::vector<CodeFragment*>& code, const CodeFragmentList& fl);
+	friend CodeFragmentList operator+ (const std::vector<CloneableAllocator<CodeFragment>>& code, const CodeFragmentList& fl);
+	friend CodeFragmentList operator+ (const CloneableVector<CodeFragment>& code, const CodeFragmentList& fl);
+
+	CodeFragmentList concatMiddle(const size_t index, const CodeFragmentList& fl) const;
+	inline CodeFragmentList concatMiddle(const size_t index, const CodeFragment& code) const { return concatMiddle(index, CodeFragmentList{ _sourceLine, code }); }
+	inline CodeFragmentList concatMiddle(const size_t index, const std::vector<CodeFragment*>& code) const { return concatMiddle(index, CodeFragmentList{ _sourceLine, code }); }
+	inline CodeFragmentList concatMiddle(const size_t index, const std::vector<CloneableAllocator<CodeFragment>>& code) const { return concatMiddle(index, CodeFragmentList{ _sourceLine, code }); }
+	inline CodeFragmentList concatMiddle(const size_t index, const CloneableVector<CodeFragment>& code) const { return concatMiddle(index, CodeFragmentList{ _sourceLine, code }); }
+
+	inline CodeFragmentList wrapBetween(const CodeFragmentList& before, const CodeFragmentList& after) const { return before.concat(*this).concat(after); }
+	inline CodeFragmentList wrapBetween(const CodeFragment& before, const CodeFragment& after) const { return wrapBetween(CodeFragmentList{ _sourceLine, before }, CodeFragmentList{ _sourceLine, after }); }
+	inline CodeFragmentList wrapBetween(const std::vector<CodeFragment*>& before, const std::vector<CodeFragment*>& after) const {
+		return wrapBetween(CodeFragmentList{ _sourceLine, before }, CodeFragmentList{ _sourceLine, after });
+	}
+	inline CodeFragmentList wrapBetween(const std::vector<CloneableAllocator<CodeFragment>>& before, const std::vector<CloneableAllocator<CodeFragment>>& after) const {
+		return wrapBetween(CodeFragmentList{ _sourceLine, before }, CodeFragmentList{ _sourceLine, after });
+	}
+	inline CodeFragmentList wrapBetween(const CloneableVector<CodeFragment>& before, const CloneableVector<CodeFragment>& after) const {
+		return wrapBetween(CodeFragmentList{ _sourceLine, before }, CodeFragmentList{ _sourceLine, after });
+	}
+
+	CodeFragmentList extract(const CodeFragment& from, const CodeFragment& to) const;
+
+	size_t count(const CodeFragment& code) const;
+	size_t count(CodeFragmentType codeType) const;
+
+	bool has(const CodeFragment& code) const;
+	bool has(CodeFragmentType codeType) const;
+
+	bool indexOf(const CodeFragment& code, size_t& outIndex) const;
+	bool indexOf(CodeFragmentType codeType, size_t& outIndex) const;
+
+	bool lastIndexOf(const CodeFragment& code, size_t& outIndex) const;
+	bool lastIndexOf(CodeFragmentType codeType, size_t& outIndex) const;
+
+	std::vector<CodeFragmentList> split(const CodeFragment& separator, int limit = -1) const;
+
+	std::string toString() const;
+
+public:
+	class Pointer
+	{
+	public:
+		friend class CodeFragmentList;
+
+	private:
+		const CodeFragmentList* _list;
+		size_t _idx;
+		size_t _limit;
+
+		Pointer(const CodeFragmentList* list, const size_t initialValue = 0);
+
+	public:
+		Pointer(const Pointer&) = default;
+		Pointer(Pointer&&) = default;
+
+		Pointer& operator= (const Pointer&) = default;
+		Pointer& operator= (Pointer&&) = default;
+
+		const CodeFragmentList& list() const;
+
+		size_t line() const;
+
+		size_t index() const;
+
+		void finish();
+
+		Pointer operator++ ();
+		Pointer operator++ (int);
+		Pointer operator-- ();
+		Pointer operator-- (int);
+
+		const CodeFragment& operator* () const;
+
+		const CodeFragment* operator-> () const;
+
+		operator bool() const;
+		bool operator! () const;
+	};
+
+	Pointer ptr(const size_t initialIndex = 0) const;
+};
+

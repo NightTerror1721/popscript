@@ -145,8 +145,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="functions.cpp" />
+    <ClCompile Include="ioutils.cpp" />
+    <ClCompile Include="lang_elements.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="parser_code.cpp" />
     <ClCompile Include="parser_elements.cpp" />
+    <ClCompile Include="parser_statement.cpp" />
     <ClCompile Include="script.cpp" />
     <ClCompile Include="types.cpp" />
     <ClCompile Include="utils.cpp" />
@@ -154,6 +158,9 @@
   <ItemGroup>
     <ClInclude Include="consts.h" />
     <ClInclude Include="functions.h" />
+    <ClInclude Include="ioutils.h" />
+    <ClInclude Include="lang_elements.h" />
+    <ClInclude Include="parser.h" />
     <ClInclude Include="parser_elements.h" />
     <ClInclude Include="script.h" />
     <ClInclude Include="types.h" />

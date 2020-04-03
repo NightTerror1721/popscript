@@ -5,8 +5,9 @@
 #include <type_traits>
 #include <vector>
 #include <functional>
+#include <algorithm>
 
-class BadIndex : std::exception
+class BadIndex : public std::exception
 {
 public:
 	BadIndex(int index, int min, int max, const char* msg = "");
@@ -21,13 +22,36 @@ public:
 	} {}
 };
 
-class InvalidParameter : std::exception
+class IllegalState : public std::exception
+{
+public:
+	IllegalState(const char* msg = "");
+};
+
+class InvalidParameter : public std::exception
 {
 public:
 	InvalidParameter(const char* parameter, const char* msg = "");
 };
 
 #define INVALID_PARAMETER(_Parameter) InvalidParameter{ #_Parameter }
+
+class UnexpectedNull : public std::exception
+{
+public:
+	UnexpectedNull(const char* msg = "");
+};
+
+class ParserError : public std::exception
+{
+private:
+	size_t _line;
+
+public:
+	ParserError(const size_t line, const char* msg = "");
+
+	size_t line() const;
+};
 
 
 
@@ -65,6 +89,98 @@ void wide_memset(void* const _Dst, const _Ty value, const uintptr_t size)
 	for (uintptr_t i = 0; i < (size & (~7)); ++i)
 		*(reinterpret_cast<_Ty*>(_Dst) + i) = value;
 }
+
+template<typename _Ty>
+std::vector<_Ty> slice(const std::vector<_Ty>& vec, size_t from, size_t to)
+{
+	std::vector<_Ty> res{ to - from };
+	std::copy(vec.begin() + from, vec.begin() + to, res.begin());
+	return std::move(res);
+}
+
+
+
+
+
+class ErrorList
+{
+public:
+	class Entry
+	{
+	private:
+		size_t _startLine;
+		size_t _endLine;
+		std::string _msg;
+
+	public:
+		Entry() = default;
+		Entry(size_t start, size_t end, const std::string& msg);
+
+		size_t startLine() const;
+		size_t endLine() const;
+
+		const std::string& message() const;
+	};
+
+	typedef typename std::vector<Entry>::iterator iterator;
+	typedef typename std::vector<Entry>::const_iterator const_iterator;
+
+private:
+	std::vector<Entry> _errors;
+
+	ErrorList() = default;
+	ErrorList(const ErrorList&) = default;
+	ErrorList(ErrorList&&) = default;
+
+	ErrorList& operator= (const ErrorList&) = default;
+	ErrorList& operator= (ErrorList&&) = default;
+
+	size_t size() const;
+	bool empty() const;
+
+	const Entry& operator[] (const size_t index) const;
+
+	void add(size_t startLine, size_t endLine, const std::string& msg);
+
+	friend ErrorList& operator<< (ErrorList& list, const ParserError& error);
+
+	inline operator bool() const { return !_errors.empty(); }
+	inline bool operator! () const { return _errors.empty(); }
+
+	inline iterator begin() { return _errors.begin(); }
+	inline const_iterator begin() const { return _errors.begin(); }
+	inline iterator end() { return _errors.end(); }
+	inline const_iterator end() const { return _errors.end(); }
+};
+
+
+
+
+
+
+
+
+
+template<typename _Base>
+class Conversor
+{
+public:
+	constexpr Conversor() = default;
+
+	template<typename _Ty>
+	_Ty& as()
+	{
+		static_assert(std::is_base_of<_Base, _Ty>::value);
+		return reinterpret_cast<_Ty&>(*this);
+	}
+
+	template<typename _Ty>
+	const _Ty& as() const
+	{
+		static_assert(std::is_base_of<_Base, _Ty>::value);
+		return reinterpret_cast<const _Ty&>(*this);
+	}
+};
 
 
 
@@ -111,19 +227,31 @@ public:
 	{
 		auto old = _data;
 		_data = __clone(base);
-		delete old;
+		if(old)
+			delete old;
+		return *this;
+	}
+	CloneableAllocator& operator= (decltype(nullptr))
+	{
+		if (_data)
+			delete _data;
+		_data = nullptr;
 		return *this;
 	}
 	CloneableAllocator& operator= (const CloneableAllocator& a)
 	{
 		auto old = _data;
 		_data = !a._data ? nullptr : __clone(a._data);
-		delete old;
+		if (old)
+			delete old;
 		return *this;
 	}
 	CloneableAllocator& operator= (CloneableAllocator&& a) noexcept
 	{
+		auto old = _data;
 		_data = std::move(a._data);
+		if (old)
+			delete old;
 		a._data = nullptr;
 		return *this;
 	}
@@ -139,6 +267,19 @@ public:
 		if (!_data)
 			return a._data;
 		return !a._data || _data->operator!=(*a._data);
+	}
+
+	bool operator== (const _Base& b) const
+	{
+		if (!_data)
+			return false;
+		return _data->operator==(b);
+	}
+	bool operator!= (const _Base& b) const
+	{
+		if (!_data)
+			return true;
+		return _data->operator!=(b);
 	}
 
 	operator _Base& () { return *_data; }
@@ -184,6 +325,10 @@ public:
 
 	inline size_t size() const { return _data.size(); }
 	inline bool empty() const { return _data.empty(); }
+
+	inline const CloneableAllocator<_Base>* data() const { return _data.data(); }
+
+	inline const std::vector<CloneableAllocator<_Base>>& stdvector() const { return _data; }
 
 	inline void push_back(const _Base& value) { _data.emplace_back(value); }
 

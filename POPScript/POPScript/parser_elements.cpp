@@ -201,6 +201,16 @@ bool TypeConstant::isValid(const std::string& str) { return DataType::findTypeFr
 bool TypeConstant::isValid(ScriptCode code) { return DataType::findTypeFromValue(code); }
 
 
+TypeConstant TypeConstant::parse(const std::string& str)
+{
+	return { DataType::findTypeFromValueName(str).getIdentifierValue(str) };
+}
+TypeConstant TypeConstant::parse(ScriptCode code)
+{
+	return { code };
+}
+
+
 
 
 
@@ -1090,6 +1100,7 @@ std::string InstructionVarDeclaration::toString(size_t identation) const
 		return ident(identation) + ";";
 
 	std::stringstream ss;
+	ss << ident(identation) << "var ";
 	bool first = true;
 	for (const Entry& e : _entries)
 	{
@@ -1118,3 +1129,618 @@ bool InstructionVarDeclaration::operator== (const InstructionVarDeclaration& ins
 bool InstructionVarDeclaration::operator!= (const InstructionVarDeclaration& inst) const { return _entries != inst._entries; }
 
 const InstructionVarDeclaration::Entry& InstructionVarDeclaration::operator[] (size_t idx) const { return _entries[idx]; }
+
+
+
+
+
+
+
+
+
+
+
+InstructionConstDeclaration::Entry::Entry() :
+	_id{ "" },
+	_value{}
+{}
+InstructionConstDeclaration::Entry::Entry(const Identifier& identifier, FieldValue initValue) :
+	_id{ identifier },
+	_value{ initValue }
+{}
+
+const Identifier& InstructionConstDeclaration::Entry::getIdentifier() const { return _id; }
+
+FieldValue InstructionConstDeclaration::Entry::getInitValue() const { return _value; }
+
+bool InstructionConstDeclaration::Entry::operator== (const InstructionConstDeclaration::Entry& e) const { return _id == e._id && _value == e._value; }
+bool InstructionConstDeclaration::Entry::operator!= (const InstructionConstDeclaration::Entry& e) const { return _id != e._id || _value != e._value; }
+
+
+
+InstructionConstDeclaration::InstructionConstDeclaration() :
+	_entries{}
+{}
+InstructionConstDeclaration::InstructionConstDeclaration(const std::vector<Entry>& entries) :
+	_entries{ entries }
+{}
+InstructionConstDeclaration::InstructionConstDeclaration(const InstructionConstDeclaration& inst) :
+	_entries{ inst._entries }
+{}
+InstructionConstDeclaration::InstructionConstDeclaration(InstructionConstDeclaration&& inst) noexcept :
+	_entries{ std::move(inst._entries) }
+{}
+InstructionConstDeclaration::~InstructionConstDeclaration() {}
+
+InstructionConstDeclaration& InstructionConstDeclaration::operator= (const InstructionConstDeclaration& inst)
+{
+	_entries = inst._entries;
+	return *this;
+}
+InstructionConstDeclaration& InstructionConstDeclaration::operator= (InstructionConstDeclaration&& inst) noexcept
+{
+	_entries = std::move(inst._entries);
+	return *this;
+}
+
+bool InstructionConstDeclaration::empty() const { return _entries.empty(); }
+size_t InstructionConstDeclaration::size() const { return _entries.size(); }
+
+const InstructionConstDeclaration::Entry& InstructionConstDeclaration::getEntry(size_t idx) const { return _entries[idx]; }
+
+Instruction::Type InstructionConstDeclaration::getInstructionType() const { return Type::ConstDeclaration; }
+
+std::string InstructionConstDeclaration::toString(size_t identation) const
+{
+	if (_entries.empty())
+		return ident(identation) + ";";
+
+	std::stringstream ss;
+	ss << ident(identation) << "const ";
+	bool first = true;
+	for (const Entry& e : _entries)
+	{
+		if (!first)
+			ss << ", ";
+		else first = false;
+
+		ss << e.getIdentifier() << " = " << e.getInitValue();
+	}
+	ss << ";";
+
+	return ss.str();
+}
+
+void* InstructionConstDeclaration::clone() const { return new InstructionConstDeclaration{ *this }; }
+
+bool InstructionConstDeclaration::operator== (const Instruction& inst) const
+{
+	if (inst.getInstructionType() == Type::ConstDeclaration)
+		return operator==(reinterpret_cast<const InstructionConstDeclaration&>(inst));
+	return false;
+}
+bool InstructionConstDeclaration::operator== (const InstructionConstDeclaration& inst) const { return _entries == inst._entries; }
+bool InstructionConstDeclaration::operator!= (const InstructionConstDeclaration& inst) const { return _entries != inst._entries; }
+
+const InstructionConstDeclaration::Entry& InstructionConstDeclaration::operator[] (size_t idx) const { return _entries[idx]; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+InstructionConditional::InstructionConditional() :
+	_condition{},
+	_block{},
+	_elseBlock{}
+{}
+InstructionConditional::InstructionConditional(const Statement& condition, const Instruction& block, const Instruction* elseBlock) :
+	_condition{ condition },
+	_block{ block },
+	_elseBlock{ elseBlock }
+{}
+InstructionConditional::InstructionConditional(const InstructionConditional& inst) :
+	_condition{ inst._condition },
+	_block{ inst._block },
+	_elseBlock{ inst._elseBlock }
+{}
+InstructionConditional::InstructionConditional(InstructionConditional&& inst) noexcept :
+	_condition{ std::move(inst._condition) },
+	_block{ std::move(inst._block) },
+	_elseBlock{ std::move(inst._elseBlock) }
+{}
+InstructionConditional::~InstructionConditional() {}
+
+InstructionConditional& InstructionConditional::operator= (const InstructionConditional& inst)
+{
+	_condition = inst._condition;
+	_block = inst._block;
+	_elseBlock = inst._elseBlock;
+	return *this;
+}
+InstructionConditional& InstructionConditional::operator= (InstructionConditional&& inst) noexcept
+{
+	_condition = std::move(inst._condition);
+	_block = std::move(inst._block);
+	_elseBlock = std::move(inst._elseBlock);
+	return *this;
+}
+
+const Statement& InstructionConditional::getCondition() const { return _condition; }
+
+const Instruction& InstructionConditional::getBlock() const { return _block; }
+
+bool InstructionConditional::hasElseBlock() const { return _elseBlock; }
+const Instruction& InstructionConditional::getElseBlock() const { return _elseBlock; }
+
+Instruction::Type InstructionConditional::getInstructionType() const { return Type::Conditional; }
+
+std::string InstructionConditional::toString(size_t identation) const
+{
+	std::stringstream ss;
+
+	ss << ident(identation) << "if(" << _condition->toString() << ") " << _block->toString(identation);
+	if (_block->getInstructionType() == Type::StatementScope)
+		ss << _block->toString(identation);
+	else ss << std::endl << _block->toString(identation + 4);
+	if (_elseBlock)
+		ss << " else " << _elseBlock->toString(identation);
+
+	return ss.str();
+}
+
+void* InstructionConditional::clone() const { return new InstructionConditional{ *this }; }
+
+bool InstructionConditional::operator== (const Instruction& inst) const
+{
+	if (inst.getInstructionType() == Type::Conditional)
+		return operator==(reinterpret_cast<const InstructionConditional&>(inst));
+	return false;
+}
+bool InstructionConditional::operator== (const InstructionConditional& inst) const { return _condition == inst._condition && _block == inst._block && _elseBlock == inst._elseBlock; }
+bool InstructionConditional::operator!= (const InstructionConditional& inst) const { return _condition != inst._condition || _block != inst._block || _elseBlock != inst._elseBlock; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+constexpr ScriptCode EVERY_FIRST_VALUE[] = {
+	0x1 << 0,
+	0x1 << 1,
+	0x1 << 2,
+	0x1 << 3,
+	0x1 << 4,
+	0x1 << 5,
+	0x1 << 6,
+	0x1 << 7,
+	0x1 << 8,
+	0x1 << 9,
+	0x1 << 10,
+	0x1 << 11,
+	0x1 << 12,
+	0x1 << 13,
+	0x1 << 14,
+	0x1 << 15
+};
+constexpr size_t EVERY_FIRST_VALUE_LEN = sizeof(EVERY_FIRST_VALUE) / sizeof(ScriptCode);
+
+
+
+
+InstructionEveryLoop::InstructionEveryLoop() :
+	_turns{},
+	_block{}
+{}
+InstructionEveryLoop::InstructionEveryLoop(ScriptCode turns, const Instruction& block) :
+	_turns{ turns },
+	_block{ block }
+{}
+InstructionEveryLoop::InstructionEveryLoop(const InstructionEveryLoop& inst) :
+	_turns{ inst._turns },
+	_block{ inst._block }
+{}
+InstructionEveryLoop::InstructionEveryLoop(InstructionEveryLoop&& inst) noexcept :
+	_turns{ std::move(inst._turns) },
+	_block{ std::move(inst._block) }
+{}
+InstructionEveryLoop::~InstructionEveryLoop() {}
+
+InstructionEveryLoop& InstructionEveryLoop::operator= (const InstructionEveryLoop& inst)
+{
+	_turns = inst._turns;
+	_block = inst._block;
+	return *this;
+}
+InstructionEveryLoop& InstructionEveryLoop::operator= (InstructionEveryLoop&& inst) noexcept
+{
+	_turns = std::move(inst._turns);
+	_block = std::move(inst._block);
+	return *this;
+}
+
+ScriptCode InstructionEveryLoop::getTurns() const { return _turns; }
+
+ScriptCode InstructionEveryLoop::getFirstValue() const
+{
+	for (size_t i = 0; i < EVERY_FIRST_VALUE_LEN; i++)
+		if (_turns <= EVERY_FIRST_VALUE[i])
+			return EVERY_FIRST_VALUE[i];
+	return EVERY_FIRST_VALUE[EVERY_FIRST_VALUE_LEN - 1];
+}
+ScriptCode InstructionEveryLoop::getSecondValue() const
+{
+	return getFirstValue() - _turns;
+}
+
+const Instruction& InstructionEveryLoop::getBlock() const { return _block; }
+
+Instruction::Type InstructionEveryLoop::getInstructionType() const { return Type::EveryLoop; }
+
+std::string InstructionEveryLoop::toString(size_t identation) const
+{
+	std::stringstream ss;
+
+	ScriptCode first = getFirstValue();
+	ScriptCode second = first - _turns;
+
+	ss << ident(identation) << "every(" << first;
+	if (second > 0)
+		ss << ", " << second;
+	ss << ") ";
+
+	if (_block->getInstructionType() == Type::StatementScope)
+		ss << _block->toString(identation);
+	else ss << std::endl << _block->toString(identation + 4);
+	
+	return ss.str();
+}
+
+void* InstructionEveryLoop::clone() const { return new InstructionEveryLoop{ *this }; }
+
+bool InstructionEveryLoop::operator== (const Instruction& inst) const
+{
+	if (inst.getInstructionType() == Type::EveryLoop)
+		return operator==(reinterpret_cast<const InstructionEveryLoop&>(inst));
+	return false;
+}
+bool InstructionEveryLoop::operator== (const InstructionEveryLoop& inst) const { return _turns == inst._turns && _block == inst._block; }
+bool InstructionEveryLoop::operator!= (const InstructionEveryLoop& inst) const { return _turns != inst._turns || _block != inst._block; }
+
+
+
+
+
+
+
+
+
+
+
+
+CodeFragmentList::CodeFragmentList() :
+	_code{},
+	_sourceLine{}
+{}
+CodeFragmentList::CodeFragmentList(const size_t sourceLine, const CodeFragment& cf) :
+	_code{ CloneableAllocator{ cf } },
+	_sourceLine{ sourceLine }
+{}
+CodeFragmentList::CodeFragmentList(const size_t sourceLine, const std::vector<CodeFragment*>& code) :
+	_code{ code.size() },
+	_sourceLine{ sourceLine }
+{
+	if (!_code.empty())
+	{
+		const size_t len = code.size();
+		CloneableAllocator<CodeFragment>* fg = &_code[0];
+		CodeFragment* const* other_fg = &code[0];
+
+		for (size_t i = 0; i < len; ++i, ++fg, ++other_fg)
+			*fg = **other_fg;
+	}
+}
+CodeFragmentList::CodeFragmentList(const size_t sourceLine, const std::vector<CloneableAllocator<CodeFragment>>& code) :
+	_code{ code },
+	_sourceLine{ sourceLine }
+{}
+CodeFragmentList::CodeFragmentList(const size_t sourceLine, const CloneableVector<CodeFragment>& code) :
+	_code{ code.stdvector() },
+	_sourceLine{ sourceLine }
+{}
+CodeFragmentList::CodeFragmentList(const size_t sourceLine, const CodeFragmentList& fl) :
+	_code{ fl._code },
+	_sourceLine{ sourceLine }
+{}
+CodeFragmentList::CodeFragmentList(const CodeFragmentList& fl) :
+	_code{ fl._code },
+	_sourceLine{ fl._sourceLine }
+{}
+CodeFragmentList::CodeFragmentList(CodeFragmentList&& fl) noexcept :
+	_code{ std::move(fl._code) }
+	,
+	_sourceLine{ std::move(fl._sourceLine) }
+{}
+CodeFragmentList::~CodeFragmentList() {}
+
+CodeFragmentList& CodeFragmentList::operator= (const CodeFragmentList& fl)
+{
+	_code = fl._code;
+	_sourceLine = fl._sourceLine;
+	return *this;
+}
+CodeFragmentList& CodeFragmentList::operator= (CodeFragmentList&& fl) noexcept
+{
+	_code = std::move(fl._code);
+	_sourceLine = std::move(fl._sourceLine);
+	return *this;
+}
+
+size_t CodeFragmentList::size() const { return _code.size(); }
+bool CodeFragmentList::empty() const { return _code.empty(); }
+CodeFragmentList::operator bool() const { return !_code.empty(); }
+bool operator! (const CodeFragmentList& fl) { return fl._code.empty(); }
+
+size_t CodeFragmentList::sourceLine() const { return _sourceLine; }
+
+const std::vector<CloneableAllocator<CodeFragment>>& CodeFragmentList::code() const { return _code; }
+
+void CodeFragmentList::set(const size_t index, const CodeFragment& code) { _code[index] = code; }
+const CodeFragment& CodeFragmentList::get(const size_t index) const { return _code[index]; }
+
+CodeFragment& CodeFragmentList::operator[] (const size_t index) { return _code[index]; }
+const CodeFragment& CodeFragmentList::operator[] (const size_t index) const { return _code[index]; }
+
+CodeFragmentList::CodeFragmentList(const size_t sourceLine, const std::vector<CodeFragment*> code, const size_t off, const size_t len) :
+	CodeFragmentList{ sourceLine, slice(code, off, off + len) }
+{}
+CodeFragmentList::CodeFragmentList(const size_t sourceLine, const std::vector<CloneableAllocator<CodeFragment>>& code, const size_t off, const size_t len) :
+	CodeFragmentList{ sourceLine, slice(code, off, off + len) }
+{}
+CodeFragmentList::CodeFragmentList(const size_t sourceLine, const CloneableVector<CodeFragment>& code, const size_t off, const size_t len) :
+	CodeFragmentList{ sourceLine, slice(code.stdvector(), off, off + len) }
+{}
+
+CodeFragmentList CodeFragmentList::sublist(const size_t off, const size_t len) const { return { _sourceLine, _code, off, len }; }
+CodeFragmentList CodeFragmentList::sublist(const size_t off) const { return { _sourceLine, _code, off, _code.size() - off }; }
+
+CodeFragmentList CodeFragmentList::concat(const CodeFragmentList& fl) const
+{
+	std::vector<CloneableAllocator<CodeFragment>> res{ _code.size() + fl.size() };
+	std::copy(_code.begin(), _code.end(), res.begin());
+	std::copy(fl._code.begin(), fl._code.end(), res.begin() + _code.size());
+
+	return { std::min(_sourceLine, fl._sourceLine), std::move(res) };
+}
+
+CodeFragmentList operator+ (const CodeFragmentList& fl0, const CodeFragmentList& fl1) { return fl0.concat(fl1); }
+CodeFragmentList operator+ (const CodeFragmentList& fl, const CodeFragment& code) { return fl.concat(CodeFragmentList{ fl._sourceLine, code }); }
+CodeFragmentList operator+ (const CodeFragmentList& fl, const std::vector<CodeFragment*>& code) { return fl.concat(CodeFragmentList{ fl._sourceLine, code }); }
+CodeFragmentList operator+ (const CodeFragmentList& fl, const std::vector<CloneableAllocator<CodeFragment>>& code) { return fl.concat(CodeFragmentList{ fl._sourceLine, code }); }
+CodeFragmentList operator+ (const CodeFragmentList& fl, const CloneableVector<CodeFragment>& code) { return fl.concat(CodeFragmentList{ fl._sourceLine, code }); }
+
+CodeFragmentList operator+ (const CodeFragment& code, const CodeFragmentList& fl) { return CodeFragmentList{ fl._sourceLine, code }.concat(fl); }
+CodeFragmentList operator+ (const std::vector<CodeFragment*>& code, const CodeFragmentList& fl) { return CodeFragmentList{ fl._sourceLine, code }.concat(fl); }
+CodeFragmentList operator+ (const std::vector<CloneableAllocator<CodeFragment>>& code, const CodeFragmentList& fl) { return CodeFragmentList{ fl._sourceLine, code }.concat(fl); }
+CodeFragmentList operator+ (const CloneableVector<CodeFragment>& code, const CodeFragmentList& fl) { return CodeFragmentList{ fl._sourceLine, code }.concat(fl); }
+
+CodeFragmentList CodeFragmentList::concatMiddle(const size_t index, const CodeFragmentList& fl) const
+{
+	if (index == 0)
+		return concat(fl);
+	if (index == _code.size())
+		return fl.concat(*this);
+	return sublist(0, index).concat(fl).concat(sublist(index));
+}
+
+CodeFragmentList CodeFragmentList::extract(const CodeFragment& from, const CodeFragment& to) const
+{
+	bool init = false;
+
+	size_t offset = 0, len = 0, idx = 0;
+
+	for (const auto& c : _code)
+	{
+		if (!init)
+		{
+			if (c == from)
+			{
+				init = true;
+				offset = idx;
+			}
+			++idx;
+		}
+		else
+		{
+			if (c == to)
+				break;
+			++len;
+		}
+	}
+
+	if (!init)
+		return {};
+	return sublist(offset, len);
+}
+
+size_t CodeFragmentList::count(const CodeFragment& code) const
+{
+	size_t count = 0;
+	for (const auto& cf : _code)
+		if (cf == code)
+			++count;
+	return count;
+}
+
+size_t CodeFragmentList::count(CodeFragmentType codeType) const
+{
+	size_t count = 0;
+	for (const auto& cf : _code)
+		if (cf->getCodeFragmentType() == codeType)
+			++count;
+	return count;
+}
+
+bool CodeFragmentList::has(const CodeFragment& code) const
+{
+	for (const auto& cf : _code)
+		if (cf == code)
+			return true;
+	return false;
+}
+bool CodeFragmentList::has(CodeFragmentType codeType) const
+{
+	for (const auto& cf : _code)
+		if (cf->getCodeFragmentType() == codeType)
+			return true;
+	return false;
+}
+
+bool CodeFragmentList::indexOf(const CodeFragment& code, size_t& outIndex) const
+{
+	size_t index = 0;
+	for (const auto& cf : _code)
+	{
+		if (cf == code)
+		{
+			outIndex = index;
+			return true;
+		}
+		++index;
+	}
+	return false;
+}
+bool CodeFragmentList::indexOf(CodeFragmentType codeType, size_t& outIndex) const
+{
+	size_t index = 0;
+	for (const auto& cf : _code)
+	{
+		if (cf->getCodeFragmentType() == codeType)
+		{
+			outIndex = index;
+			return true;
+		}
+		++index;
+	}
+	return false;
+}
+
+bool CodeFragmentList::lastIndexOf(const CodeFragment& code, size_t& outIndex) const
+{
+	bool found = false;
+	size_t index = 0;
+	for (const auto& cf : _code)
+	{
+		if (cf == code)
+		{
+			outIndex = index;
+			found = true;
+		}
+		++index;
+	}
+	return found;
+}
+bool CodeFragmentList::lastIndexOf(CodeFragmentType codeType, size_t& outIndex) const
+{
+	bool found = false;
+	size_t index = 0;
+	for (const auto& cf : _code)
+	{
+		if (cf->getCodeFragmentType() == codeType)
+		{
+			outIndex = index;
+			found = true;
+		}
+		++index;
+	}
+	return found;
+}
+
+std::vector<CodeFragmentList> CodeFragmentList::split(const CodeFragment& separator, int limit) const
+{
+	if (_code.empty() || limit == 1)
+		return { *this };
+
+	limit = limit < 1 ? -1 : limit;
+	std::vector<CodeFragmentList> parts;
+
+	size_t i, off;
+	for (i = 0, off = 0; i < _code.size(); i++)
+		if (_code[i] == separator && limit != 0)
+		{
+			parts.push_back(sublist(off, i - off));
+			off = i + 1;
+			--limit;
+		}
+	if (i > off)
+		parts.push_back(sublist(off, i - off));
+	return std::move(parts);
+}
+
+std::string CodeFragmentList::toString() const
+{
+	if (_code.empty())
+		return "[]";
+
+	std::stringstream ss;
+	ss << "[";
+
+	bool first = true;
+	for (const auto& c : _code)
+	{
+		if (first)
+		{
+			first = false;
+			ss << c->toString();
+		}
+		else ss << ", " << c->toString();
+	}
+
+	ss << "]";
+	return ss.str();
+}
+
+CodeFragmentList::Pointer CodeFragmentList::ptr(const size_t initialIndex) const { return { this, initialIndex }; }
+
+
+
+CodeFragmentList::Pointer::Pointer(const CodeFragmentList* list, const size_t initialValue) :
+	_list{ list },
+	_idx{ initialValue },
+	_limit{ list->size() }
+{}
+
+const CodeFragmentList& CodeFragmentList::Pointer::list() const { return *_list; }
+
+size_t CodeFragmentList::Pointer::line() const { return _list->sourceLine(); }
+
+size_t CodeFragmentList::Pointer::index() const { return _idx; }
+
+void CodeFragmentList::Pointer::finish() { _idx = _limit; }
+
+CodeFragmentList::Pointer CodeFragmentList::Pointer::operator++ () { return { _list, ++_idx }; }
+CodeFragmentList::Pointer CodeFragmentList::Pointer::operator++ (int) { return { _list, _idx++ }; }
+CodeFragmentList::Pointer CodeFragmentList::Pointer::operator-- () { return { _list, --_idx }; }
+CodeFragmentList::Pointer CodeFragmentList::Pointer::operator-- (int) { return { _list, _idx-- }; }
+
+const CodeFragment& CodeFragmentList::Pointer::operator* () const { return (*_list)[_idx]; }
+
+const CodeFragment* CodeFragmentList::Pointer::operator-> () const { return &(*_list)[_idx]; }
+
+CodeFragmentList::Pointer::operator bool() const { return _idx < _limit; }
+bool CodeFragmentList::Pointer::operator! () const { return _idx >= _limit; }

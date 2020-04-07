@@ -143,7 +143,7 @@ bool LiteralInteger::isValid(const std::string& str) { return std::regex_search(
 
 
 
-TypeConstant::TypeConstant(ScriptCode value) :
+TypeConstant::TypeConstant(CodeValue value) :
 	Statement{},
 	_value{ value },
 	_type{ DataType::findTypeFromValue(value) }
@@ -176,7 +176,7 @@ TypeConstant& TypeConstant::operator= (TypeConstant&& tc) noexcept
 bool TypeConstant::isValid() const { return _type.isValid(); }
 
 DataType TypeConstant::getType() const { return _type; }
-ScriptCode TypeConstant::getValue() const { return _value; }
+CodeValue TypeConstant::getValue() const { return _value; }
 
 CodeFragmentType TypeConstant::getCodeFragmentType() const { return CodeFragmentType::TypeConstant; }
 
@@ -198,14 +198,14 @@ bool TypeConstant::operator!= (const TypeConstant& tc) const { return _value != 
 
 
 bool TypeConstant::isValid(const std::string& str) { return DataType::findTypeFromValueName(str); }
-bool TypeConstant::isValid(ScriptCode code) { return DataType::findTypeFromValue(code); }
+bool TypeConstant::isValid(CodeValue code) { return DataType::findTypeFromValue(code); }
 
 
 TypeConstant TypeConstant::parse(const std::string& str)
 {
 	return { DataType::findTypeFromValueName(str).getIdentifierValue(str) };
 }
-TypeConstant TypeConstant::parse(ScriptCode code)
+TypeConstant TypeConstant::parse(CodeValue code)
 {
 	return { code };
 }
@@ -1320,7 +1320,7 @@ bool InstructionConditional::operator!= (const InstructionConditional& inst) con
 
 
 
-constexpr ScriptCode EVERY_FIRST_VALUE[] = {
+constexpr CodeValue EVERY_FIRST_VALUE[] = {
 	0x1 << 0,
 	0x1 << 1,
 	0x1 << 2,
@@ -1338,7 +1338,7 @@ constexpr ScriptCode EVERY_FIRST_VALUE[] = {
 	0x1 << 14,
 	0x1 << 15
 };
-constexpr size_t EVERY_FIRST_VALUE_LEN = sizeof(EVERY_FIRST_VALUE) / sizeof(ScriptCode);
+constexpr size_t EVERY_FIRST_VALUE_LEN = sizeof(EVERY_FIRST_VALUE) / sizeof(CodeValue);
 
 
 
@@ -1347,7 +1347,7 @@ InstructionEveryLoop::InstructionEveryLoop() :
 	_turns{},
 	_block{}
 {}
-InstructionEveryLoop::InstructionEveryLoop(ScriptCode turns, const Instruction& block) :
+InstructionEveryLoop::InstructionEveryLoop(CodeValue turns, const Instruction& block) :
 	_turns{ turns },
 	_block{ block }
 {}
@@ -1374,16 +1374,16 @@ InstructionEveryLoop& InstructionEveryLoop::operator= (InstructionEveryLoop&& in
 	return *this;
 }
 
-ScriptCode InstructionEveryLoop::getTurns() const { return _turns; }
+CodeValue InstructionEveryLoop::getTurns() const { return _turns; }
 
-ScriptCode InstructionEveryLoop::getFirstValue() const
+CodeValue InstructionEveryLoop::getFirstValue() const
 {
 	for (size_t i = 0; i < EVERY_FIRST_VALUE_LEN; i++)
 		if (_turns <= EVERY_FIRST_VALUE[i])
 			return EVERY_FIRST_VALUE[i];
 	return EVERY_FIRST_VALUE[EVERY_FIRST_VALUE_LEN - 1];
 }
-ScriptCode InstructionEveryLoop::getSecondValue() const
+CodeValue InstructionEveryLoop::getSecondValue() const
 {
 	return getFirstValue() - _turns;
 }
@@ -1396,8 +1396,8 @@ std::string InstructionEveryLoop::toString(size_t identation) const
 {
 	std::stringstream ss;
 
-	ScriptCode first = getFirstValue();
-	ScriptCode second = first - _turns;
+	CodeValue first = getFirstValue();
+	CodeValue second = first - _turns;
 
 	ss << ident(identation) << "every(" << first;
 	if (second > 0)

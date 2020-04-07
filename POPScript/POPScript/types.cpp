@@ -14,9 +14,9 @@ _NativeDataType::_NativeDataType(const uint8_t id, const std::string& name) :
 _NativeDataType::_NativeDataType(
 	const uint8_t id,
 	const std::string& name,
-	const std::vector<std::pair<std::string, ScriptCode>>& availableValues,
+	const std::vector<std::pair<std::string, CodeValue>>& availableValues,
 	const std::string& defaultName,
-	ScriptCode defaultValue) :
+	CodeValue defaultValue) :
 	_id{ id },
 	_name{ name },
 	_integerType{ false },
@@ -47,18 +47,18 @@ bool _NativeDataType::isValidIdentifier(const std::string& identifier) const
 	return _avByName.find(identifier) != _avByName.end();
 }
 
-bool _NativeDataType::isValidValue(ScriptCode value) const
+bool _NativeDataType::isValidValue(CodeValue value) const
 {
 	return _avByValue.find(value) != _avByValue.end();
 }
 
-std::string _NativeDataType::getValueIdentifier(ScriptCode value) const
+std::string _NativeDataType::getValueIdentifier(CodeValue value) const
 {
 	const auto& it = _avByValue.find(value);
 	return it != _avByValue.end() ? it->second : "";
 }
 
-ScriptCode _NativeDataType::getIdentifierValue(const std::string& identifier) const
+CodeValue _NativeDataType::getIdentifierValue(const std::string& identifier) const
 {
 	const auto& it = _avByName.find(identifier);
 	return it != _avByName.end() ? it->second : 0;
@@ -73,7 +73,7 @@ std::map<std::string, _NativeDataType> _NativeDataType::_MappedTypes{};
 std::vector<_NativeDataType*> _NativeDataType::_TypesList{};
 
 std::map<std::string, _NativeDataType*> _NativeDataType::_MappedConstantByName{};
-std::map<ScriptCode, _NativeDataType*> _NativeDataType::_MappedConstantByValue{};
+std::map<CodeValue, _NativeDataType*> _NativeDataType::_MappedConstantByValue{};
 
 const _NativeDataType* _NativeDataType::registerType(const std::string& name)
 {
@@ -100,7 +100,7 @@ const _NativeDataType* _NativeDataType::registerType(const std::string& name)
 	}
 	else return nullptr;
 }
-const _NativeDataType* _NativeDataType::registerType(const std::string& name, const std::vector<std::pair<std::string, ScriptCode>>& availableValues, const std::string& defaultName, ScriptCode defaultValue)
+const _NativeDataType* _NativeDataType::registerType(const std::string& name, const std::vector<std::pair<std::string, CodeValue>>& availableValues, const std::string& defaultName, CodeValue defaultValue)
 {
 	if (_MappedTypes.find(name) != _MappedTypes.end())
 		return nullptr;
@@ -120,7 +120,7 @@ const _NativeDataType* _NativeDataType::getType(const std::string& name)
 {
 	return &_MappedTypes.find(name)->second;
 }
-const _NativeDataType* _NativeDataType::findTypeFromValue(ScriptCode value)
+const _NativeDataType* _NativeDataType::findTypeFromValue(CodeValue value)
 {
 	const auto& it = _MappedConstantByValue.find(value);
 	return it == _MappedConstantByValue.end() ? nullptr : it->second;
@@ -225,10 +225,10 @@ bool DataType::isValid() const { return _type; }
 std::vector<std::string> DataType::availableValues() const { return _type->availableValues(); }
 
 bool DataType::isValidIdentifier(const std::string& identifier) const { return _type->isValidIdentifier(identifier); }
-bool DataType::isValidValue(ScriptCode value) const { return _type->isValidValue(value); }
+bool DataType::isValidValue(CodeValue value) const { return _type->isValidValue(value); }
 
-std::string DataType::getValueIdentifier(ScriptCode value) const { return _type->getValueIdentifier(value); }
-ScriptCode DataType::getIdentifierValue(const std::string& identifier) const { return _type->getIdentifierValue(identifier); }
+std::string DataType::getValueIdentifier(CodeValue value) const { return _type->getValueIdentifier(value); }
+CodeValue DataType::getIdentifierValue(const std::string& identifier) const { return _type->getIdentifierValue(identifier); }
 
 bool operator== (const DataType& dt0, const DataType& dt1) { return *dt0._type == *dt1._type; }
 bool operator!= (const DataType& dt0, const DataType& dt1) { return *dt0._type != *dt1._type; }
@@ -239,7 +239,7 @@ DataType::operator bool() const { return _type; }
 
 bool DataType::isValidType(const std::string& name) { return _NativeDataType::isValidType(name); }
 DataType DataType::getType(const std::string& name) { return _NativeDataType::getType(name); }
-DataType DataType::findTypeFromValue(ScriptCode value) { return _NativeDataType::findTypeFromValue(value); }
+DataType DataType::findTypeFromValue(CodeValue value) { return _NativeDataType::findTypeFromValue(value); }
 DataType DataType::findTypeFromValueName(const std::string& value) { return _NativeDataType::findTypeFromValueName(value); }
 
 DataType DataType::integer() { return { _NativeDataType::Integer }; }

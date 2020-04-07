@@ -13,13 +13,13 @@ Script::Script() :
 }
 
 
-void Script::setCode(const size_t index, const ScriptCode code)
+void Script::setCode(const size_t index, const CodeValue code)
 {
 	if(index >= MAX_CODES)
 		throw BadIndex{ index, 0, MAX_CODES };
 	_codes[index] = code;
 }
-ScriptCode Script::getCode(const size_t index) const
+CodeValue Script::getCode(const size_t index) const
 {
 	if (index >= MAX_CODES)
 		throw BadIndex{ index, 0, MAX_CODES };
@@ -136,7 +136,7 @@ void ScriptCodeBuilder::clear()
 	_size = 0;
 }
 
-CodeLocation ScriptCodeBuilder::push_back(const ScriptCode code)
+CodeLocation ScriptCodeBuilder::push_back(const CodeValue code)
 {
 	if (_size >= MAX_CODES)
 		throw FullCodeData{};
@@ -155,7 +155,7 @@ CodeLocation ScriptCodeBuilder::push_back(const ScriptCode code)
 	++_size;
 	return node;
 }
-CodeLocation ScriptCodeBuilder::push_front(const ScriptCode code)
+CodeLocation ScriptCodeBuilder::push_front(const CodeValue code)
 {
 	if (_size >= MAX_CODES)
 		throw FullCodeData{};
@@ -175,13 +175,13 @@ CodeLocation ScriptCodeBuilder::push_front(const ScriptCode code)
 	return node;
 }
 
-ScriptCode& ScriptCodeBuilder::front() { return _front->code; }
-const ScriptCode& ScriptCodeBuilder::front() const { return _front->code; }
+CodeValue& ScriptCodeBuilder::front() { return _front->code; }
+const CodeValue& ScriptCodeBuilder::front() const { return _front->code; }
 
-ScriptCode& ScriptCodeBuilder::back() { return _back->code; }
-const ScriptCode& ScriptCodeBuilder::back() const { return _back->code; }
+CodeValue& ScriptCodeBuilder::back() { return _back->code; }
+const CodeValue& ScriptCodeBuilder::back() const { return _back->code; }
 
-CodeLocation ScriptCodeBuilder::insert_before(const CodeLocation location, const ScriptCode code)
+CodeLocation ScriptCodeBuilder::insert_before(const CodeLocation location, const CodeValue code)
 {
 	if (location->builder != this)
 		throw INVALID_PARAMETER(location->builder);
@@ -198,7 +198,7 @@ CodeLocation ScriptCodeBuilder::insert_before(const CodeLocation location, const
 	++_size;
 	return node;
 }
-CodeLocation ScriptCodeBuilder::insert_after(const CodeLocation location, const ScriptCode code)
+CodeLocation ScriptCodeBuilder::insert_after(const CodeLocation location, const CodeValue code)
 {
 	if (location->builder != this)
 		throw INVALID_PARAMETER(location->builder);

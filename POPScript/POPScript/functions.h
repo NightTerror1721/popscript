@@ -42,7 +42,7 @@ private:
 	std::vector<Parameter> _pars;
 	bool _void;
 
-	ScriptCode _code;
+	CodeValue _code;
 
 public:
 	Callable();
@@ -62,7 +62,7 @@ public:
 
 	const Parameter& operator[] (size_t idx) const;
 
-	ScriptCode code() const;
+	CodeValue code() const;
 
 	bool isGetter() const;
 	bool isSetter() const;
@@ -72,11 +72,11 @@ public:
 	friend bool operator!= (const Callable& c0, const Callable& c1);
 
 private:
-	Callable(Type type, const std::string& name, bool isVoid, ScriptCode code, const std::vector<Parameter>& parameters);
+	Callable(Type type, const std::string& name, bool isVoid, CodeValue code, const std::vector<Parameter>& parameters);
 
 public:
-	static Callable getter(const std::string& name, ScriptCode code);
-	static Callable setter(const std::string& name, ScriptCode code, DataType valueType = DataType::integer());
-	static Callable function(const std::string& name, ScriptCode code, bool isVoid, const std::vector<Parameter>& parameters);
+	static Callable getter(const std::string& name, CodeValue code);
+	static Callable setter(const std::string& name, CodeValue code, DataType valueType = DataType::integer());
+	static Callable function(const std::string& name, CodeValue code, bool isVoid, const std::vector<Parameter>& parameters);
 };
 

@@ -12,13 +12,13 @@
 #define MAX_FIELDS 512U
 #define MAX_VARS 64U
 
-#define CODES_ARRAY_SIZE (MAX_CODES * sizeof(ScriptCode))
+#define CODES_ARRAY_SIZE (MAX_CODES * sizeof(CodeValue))
 #define FIELDS_ARRAY_SIZE (MAX_FIELDS * sizeof(ScriptField))
 #define EMPTY_DATA_ARRAY_SIZE 264
 #define SCRIPT_SIZE (CODES_ARRAY_SIZE + FIELDS_ARRAY_SIZE + EMPTY_DATA_ARRAY_SIZE)
 
 
-typedef Accessor<ScriptCode, MAX_CODES> ScriptCodeAccesor;
+typedef Accessor<CodeValue, MAX_CODES> ScriptCodeAccesor;
 typedef Accessor<ScriptField, MAX_FIELDS> ScriptFieldAccesor;
 
 
@@ -30,7 +30,7 @@ private:
 		byte_t _data[SCRIPT_SIZE];
 		struct
 		{
-			ScriptCode _codes[MAX_CODES];
+			CodeValue _codes[MAX_CODES];
 			ScriptField _fields[MAX_FIELDS];
 			byte_t __padding[EMPTY_DATA_ARRAY_SIZE];
 		};
@@ -40,8 +40,8 @@ public:
 	Script();
 
 
-	void setCode(const size_t index, const ScriptCode code);
-	ScriptCode getCode(const size_t index) const;
+	void setCode(const size_t index, const CodeValue code);
+	CodeValue getCode(const size_t index) const;
 
 	ScriptCodeAccesor codes();
 	const ScriptCodeAccesor codes() const;
@@ -91,7 +91,7 @@ namespace
 	struct ScriptCodeBuilderNode
 	{
 		const ScriptCodeBuilder* const builder;
-		ScriptCode code;
+		CodeValue code;
 		ScriptCodeBuilderNode* next;
 		ScriptCodeBuilderNode* prev;
 	};
@@ -114,17 +114,17 @@ public:
 
 	void clear();
 
-	CodeLocation push_back(const ScriptCode code);
-	CodeLocation push_front(const ScriptCode code);
+	CodeLocation push_back(const CodeValue code);
+	CodeLocation push_front(const CodeValue code);
 
-	ScriptCode& front();
-	const ScriptCode& front() const;
+	CodeValue& front();
+	const CodeValue& front() const;
 
-	ScriptCode& back();
-	const ScriptCode& back() const;
+	CodeValue& back();
+	const CodeValue& back() const;
 
-	CodeLocation insert_before(const CodeLocation location, const ScriptCode code);
-	CodeLocation insert_after(const CodeLocation location, const ScriptCode code);
+	CodeLocation insert_before(const CodeLocation location, const CodeValue code);
+	CodeLocation insert_after(const CodeLocation location, const CodeValue code);
 
 	uint16_t size() const;
 	bool empty() const;
@@ -135,6 +135,6 @@ public:
 	//constexpr ScriptCode& code(const CodeLocation location) { return const_cast<Node*>(location)->code; }
 	//constexpr const ScriptCode& code(const CodeLocation location) const { return location->code; }
 
-	constexpr ScriptCode& operator[] (const CodeLocation location) { return const_cast<Node*>(location)->code; }
-	constexpr const ScriptCode& operator[] (const CodeLocation location) const { return location->code; }
+	constexpr CodeValue& operator[] (const CodeLocation location) { return const_cast<Node*>(location)->code; }
+	constexpr const CodeValue& operator[] (const CodeLocation location) const { return location->code; }
 };

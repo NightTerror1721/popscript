@@ -13,8 +13,37 @@
 
 typedef uint8_t byte_t;
 
-typedef uint16_t ScriptCode;
+typedef uint16_t CodeValue;
 typedef int32_t FieldValue;
+
+enum class CodeType
+{
+	Token,
+	Internal
+};
+
+struct ScriptCode
+{
+	CodeType type;
+	CodeValue value;
+
+	inline bool isToken() const { return type == CodeType::Token; }
+	inline bool isInternal() const { return type == CodeType::Internal; }
+
+	inline bool operator== (const ScriptCode& c) const { return type == c.type && value == c.value; }
+	inline bool operator!= (const ScriptCode& c) const { return type != c.type || value != c.value; }
+
+	inline bool operator> (const ScriptCode& c) const { return type == c.type ? value > c.value : type > c.type; }
+	inline bool operator< (const ScriptCode& c) const { return type == c.type ? value < c.value : type < c.type; }
+	inline bool operator>= (const ScriptCode& c) const { return type == c.type ? value >= c.value : type >= c.type; }
+	inline bool operator<= (const ScriptCode& c) const { return type == c.type ? value <= c.value : type <= c.type; }
+
+	inline operator bool() const { return value; }
+	inline bool operator! () const { return !value; }
+
+	constexpr static ScriptCode token(CodeValue code) { return { CodeType::Token, code }; }
+	constexpr static ScriptCode internal(CodeValue code) { return { CodeType::Internal, code }; }
+};
 
 enum class FieldType : uint32_t
 {
@@ -50,7 +79,7 @@ struct ScriptField
 
 #define IToken(identifier, code) identifier = (TOKEN_OFFSET + (code))
 namespace InstructionToken {
-	enum : ScriptCode
+	enum : CodeValue
 	{
 		IToken(If, 0),
 		IToken(Else, 1),
@@ -84,7 +113,7 @@ namespace InstructionToken {
 
 #define CToken(identifier, code) identifier = (TOKEN_OFFSET + NO_COMMANDS + (code))
 namespace CommandValueToken {
-	enum : ScriptCode
+	enum : CodeValue
 	{
 		CToken(CountWild, 31),
 		CToken(AttackMarker, 43),
@@ -103,7 +132,7 @@ namespace CommandValueToken {
 }
 
 namespace CommandToken {
-	enum : ScriptCode
+	enum : CodeValue
 	{
 		CToken(ConstructBuilding, 1),
 		CToken(FetchWood, 2),
@@ -303,7 +332,7 @@ namespace CommandToken {
 #define NInternal(identifier, code) identifier = (code)
 
 namespace AttributeInternal {
-	enum : ScriptCode
+	enum : CodeValue
 	{
 		Internal(Expansion, 0),
 		Internal(PrefSpyTrains, 1),
@@ -357,7 +386,7 @@ namespace AttributeInternal {
 }
 
 namespace ReadOnlyInternal {
-	enum : ScriptCode
+	enum : CodeValue
 	{
 		NInternal(GameTurn, 0),
 		NInternal(MyNumPeople, 1),

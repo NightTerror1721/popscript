@@ -153,10 +153,10 @@ class TypeConstant : public Statement
 {
 private:
 	DataType _type;
-	ScriptCode _value;
+	CodeValue _value;
 
 public:
-	TypeConstant(ScriptCode value);
+	TypeConstant(CodeValue value);
 	TypeConstant(const TypeConstant& tc);
 	TypeConstant(TypeConstant&& tc) noexcept;
 	~TypeConstant();
@@ -167,7 +167,7 @@ public:
 	bool isValid() const;
 
 	DataType getType() const;
-	ScriptCode getValue() const;
+	CodeValue getValue() const;
 
 	CodeFragmentType getCodeFragmentType() const override;
 
@@ -181,10 +181,10 @@ public:
 
 
 	static bool isValid(const std::string& str);
-	static bool isValid(ScriptCode code);
+	static bool isValid(CodeValue code);
 
 	static TypeConstant parse(const std::string& str);
-	static TypeConstant parse(ScriptCode code);
+	static TypeConstant parse(CodeValue code);
 };
 
 
@@ -843,12 +843,12 @@ public:
 class InstructionEveryLoop : public Instruction
 {
 private:
-	ScriptCode _turns;
+	CodeValue _turns;
 	CloneableAllocator<Instruction> _block;
 
 public:
 	InstructionEveryLoop();
-	InstructionEveryLoop(ScriptCode turns, const Instruction& block);
+	InstructionEveryLoop(CodeValue turns, const Instruction& block);
 	InstructionEveryLoop(const InstructionEveryLoop& inst);
 	InstructionEveryLoop(InstructionEveryLoop&& inst) noexcept;
 	~InstructionEveryLoop();
@@ -856,10 +856,10 @@ public:
 	InstructionEveryLoop& operator= (const InstructionEveryLoop& inst);
 	InstructionEveryLoop& operator= (InstructionEveryLoop&& inst) noexcept;
 
-	ScriptCode getTurns() const;
+	CodeValue getTurns() const;
 
-	ScriptCode getFirstValue() const;
-	ScriptCode getSecondValue() const;
+	CodeValue getFirstValue() const;
+	CodeValue getSecondValue() const;
 
 	const Instruction& getBlock() const;
 
